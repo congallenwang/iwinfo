@@ -2212,6 +2212,7 @@ static int nl80211_get_scanlist_nl(const char *ifname, char *buf, int *len)
 {
 	struct nl80211_scanlist sl = { .e = (struct iwinfo_scanlist_entry *)buf };
 
+	printf("try NL80211_CMD_TRIGGER_SCAN\n");
 	if (nl80211_request(ifname, NL80211_CMD_TRIGGER_SCAN, 0, NULL, NULL))
 		goto out;
 
@@ -2292,11 +2293,13 @@ static int wpasupp_ssid_decode(const char *in, char *out, int outlen)
 
 static int nl80211_get_scanlist_wpactl(const char *ifname, char *buf, int *len)
 {
-	int sock, qmax, rssi, tries, count = -1, ready = 0;
-	char *pos, *line, *bssid, *freq, *signal, *flags, *ssid, reply[4096];
+	int sock, qmax, rssi, tries, count = 0, ready = 0;
+	char *pos, *line, *bssid, *freq, *signal, *flags, *ssid, reply[40960];
 	struct sockaddr_un local = { 0 };
 	struct iwinfo_scanlist_entry *e = (struct iwinfo_scanlist_entry *)buf;
 
+	printf("try wpa first\n");
+	
 	sock = nl80211_wpactl_connect(ifname, &local);
 
 	if (sock < 0)
@@ -2339,6 +2342,8 @@ static int nl80211_get_scanlist_wpactl(const char *ifname, char *buf, int *len)
 		}
 	}
 
+	printf("ready = %d\n",ready);
+	
 	/* receive and parse scan results if the wait above didn't time out */
 	while (ready && nl80211_wpactl_recv(sock, reply, sizeof(reply)) > 0)
 	{
@@ -2352,6 +2357,7 @@ static int nl80211_get_scanlist_wpactl(const char *ifname, char *buf, int *len)
 		     line != NULL;
 		     line = strtok_r(NULL, "\n", &pos))
 		{
+			//printf("[%s]\n",line);
 			/* skip header line */
 			if (count < 0)
 			{
@@ -2359,14 +2365,36 @@ static int nl80211_get_scanlist_wpactl(const char *ifname, char *buf, int *len)
 				continue;
 			}
 
-			bssid  = strtok(line, "\t");
-			freq   = strtok(NULL, "\t");
-			signal = strtok(NULL, "\t");
-			flags  = strtok(NULL, "\t");
+			bssid  = strtok(line, " ");//"\t");
+			freq   = strtok(NULL, " ");//"\t");
+			signal = strtok(NULL, " ");//"\t");
+			flags  = strtok(NULL, " ");//"\t");
 			ssid   = strtok(NULL, "\n");
 
+
+
 			if (!bssid || !freq || !signal || !flags || !ssid)
+			{
 				continue;
+			}
+
+
+			bssid = strtok(bssid,"=");
+			bssid = strtok(NULL,"\n");
+			
+			freq = strtok(freq,"=");
+			freq = strtok(NULL,"\n");
+
+			signal = strtok(signal,"=");
+			signal = strtok(NULL,"\n");
+
+			flags = strtok(flags,"=");
+			flags = strtok(NULL,"\n");
+
+			ssid = strtok(ssid,"=");
+			ssid = strtok(NULL,"\n");
+			
+			//printf("[bssid=%s,freq=%s,signal=%s,flags=%s,ssid=%s]\n",bssid,freq,signal,flags,ssid);
 
 			/* BSSID */
 			e->mac[0] = strtol(&bssid[0],  NULL, 16);
@@ -2390,7 +2418,7 @@ static int nl80211_get_scanlist_wpactl(const char *ifname, char *buf, int *len)
 			/* Channel */
 			e->channel = nl80211_freq2channel(atoi(freq));
 
-			/* Signal */
+			/* Signal */			
 			rssi = atoi(signal);
 			e->signal = rssi;
 
@@ -2460,23 +2488,28 @@ static int nl80211_get_scanlist(const char *ifname, char *buf, int *len)
 	/* WPA supplicant */
 	if (!nl80211_get_scanlist_wpactl(ifname, buf, len))
 	{
+		printf("direct ret\n");
 		return 0;
-	}
-
+	}	
 	/* station / ad-hoc / monitor scan */
+	/*
 	else if (!nl80211_get_mode(ifname, &mode) &&
 	         (mode == IWINFO_OPMODE_ADHOC ||
 	          mode == IWINFO_OPMODE_MASTER ||
 	          mode == IWINFO_OPMODE_CLIENT ||
 	          mode == IWINFO_OPMODE_MONITOR) &&
 	         iwinfo_ifup(ifname))
+	         */
+	else if(1)
 	{
+		printf("sta mode\n");
 		return nl80211_get_scanlist_nl(ifname, buf, len);
 	}
 
 	/* AP scan */
 	else
 	{
+		printf("ap scan\n");
 		/* Got a temp interface, don't create yet another one */
 		if (!strncmp(ifname, "tmp.", 4))
 		{

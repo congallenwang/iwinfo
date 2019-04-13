@@ -393,6 +393,7 @@ int wext_get_scanlist(const char *ifname, char *buf, int *len)
 					if(errno == EAGAIN || errno == EINTR)
 						continue;
 
+					printf("ret with err %d\n",errno);
 					return -1;
 				}
 
@@ -409,6 +410,7 @@ int wext_get_scanlist(const char *ifname, char *buf, int *len)
 						if(buffer)
 							free(buffer);
 
+						printf("no buffer\n");
 						return -1;
 					}
 
@@ -419,6 +421,8 @@ int wext_get_scanlist(const char *ifname, char *buf, int *len)
 					wrq.u.data.flags   = 0;
 					wrq.u.data.length  = buflen;
 
+					printf("call SIOCGIWSCAN\n");
+					
 					if( wext_ioctl(ifname, SIOCGIWSCAN, &wrq) )
 					{
 						/* Check if buffer was too small (WE-17 only) */
@@ -439,6 +443,7 @@ int wext_get_scanlist(const char *ifname, char *buf, int *len)
 								buflen *= 2;
 
 							/* Try again */
+							printf("wrq.u.data.length=%d,buflen=%d\n",wrq.u.data.length,buflen);
 							goto realloc;
 						}
 
@@ -456,10 +461,12 @@ int wext_get_scanlist(const char *ifname, char *buf, int *len)
 
 						/* Bad error */
 						free(buffer);
+						printf("bad error\n");
 						return -1;
 
 					} else {
 						/* We have the results, go to process them */
+						printf("we got result\n");
 						break;
 					}
 				}

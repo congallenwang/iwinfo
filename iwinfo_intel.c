@@ -34,7 +34,7 @@ static char * hostapd_info(const char *ifname)
 	strncpy(device, ifname, 5);
 	device[5]='\0';
 
-	snprintf(path, sizeof(path), "/tmp/wlan_wave/hostapd_%s.conf", device);
+	snprintf(path, sizeof(path), "/var/run/hostapd-%s.conf", device);
 
 	if ((conf = fopen(path, "r")) != NULL)
 	{
@@ -419,7 +419,7 @@ static int intel_get_countrylist(const char *ifname, char *buf, int *len)
 int intel_get_scanlist(const char *ifname, char *buf, int *len)
 {
 	if(itf_check(ifname))
-        return wext_ops.scanlist(ifname, buf, len);
+        return nl80211_ops.scanlist(ifname, buf, len);
     else
         return -1;
 }
