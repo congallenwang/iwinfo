@@ -338,8 +338,14 @@ static int intel_get_noise(const char *ifname, int *buf)
 
 static int intel_get_quality(const char *ifname, int *buf)
 {
-	if(itf_check(ifname))
-         return wext_ops.quality(ifname, buf);
+   if(itf_check(ifname))
+   {
+	   if ((strstr(ifname, "wlan0") != NULL) ||
+	   	(strstr(ifname, "wlan2") != NULL))
+			return wext_ops.quality_max(ifname, buf);
+	   else
+			return wext_ops.quality(ifname, buf);
+   }
     else
         return -1;
 }

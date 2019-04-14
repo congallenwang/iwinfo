@@ -2294,7 +2294,7 @@ static int wpasupp_ssid_decode(const char *in, char *out, int outlen)
 static int nl80211_get_scanlist_wpactl(const char *ifname, char *buf, int *len)
 {
 	int sock, qmax, rssi, tries, count = 0, ready = 0;
-	char *pos, *line, *bssid, *freq, *signal, *flags, *ssid, reply[40960];
+	char *pos, *line, *bssid, *freq, *signal, *flags, *ssid, reply[10480];
 	struct sockaddr_un local = { 0 };
 	struct iwinfo_scanlist_entry *e = (struct iwinfo_scanlist_entry *)buf;
 
@@ -2369,15 +2369,7 @@ static int nl80211_get_scanlist_wpactl(const char *ifname, char *buf, int *len)
 			freq   = strtok(NULL, " ");//"\t");
 			signal = strtok(NULL, " ");//"\t");
 			flags  = strtok(NULL, " ");//"\t");
-			ssid   = strtok(NULL, "\n");
-
-
-
-			if (!bssid || !freq || !signal || !flags || !ssid)
-			{
-				continue;
-			}
-
+			ssid   = strtok(NULL, " ");
 
 			bssid = strtok(bssid,"=");
 			bssid = strtok(NULL,"\n");
@@ -2393,6 +2385,14 @@ static int nl80211_get_scanlist_wpactl(const char *ifname, char *buf, int *len)
 
 			ssid = strtok(ssid,"=");
 			ssid = strtok(NULL,"\n");
+
+
+			if (!bssid || !freq || !signal || !flags || !ssid)
+			{
+				continue;
+			}
+
+
 			
 			//printf("[bssid=%s,freq=%s,signal=%s,flags=%s,ssid=%s]\n",bssid,freq,signal,flags,ssid);
 
