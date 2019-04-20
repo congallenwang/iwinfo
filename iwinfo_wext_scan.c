@@ -421,7 +421,7 @@ int wext_get_scanlist(const char *ifname, char *buf, int *len)
 					wrq.u.data.flags   = 0;
 					wrq.u.data.length  = buflen;
 
-					printf("call SIOCGIWSCAN\n");
+					//printf("call SIOCGIWSCAN\n");
 					
 					if( wext_ioctl(ifname, SIOCGIWSCAN, &wrq) )
 					{
@@ -444,6 +444,8 @@ int wext_get_scanlist(const char *ifname, char *buf, int *len)
 
 							/* Try again */
 							printf("wrq.u.data.length=%d,buflen=%d\n",wrq.u.data.length,buflen);
+							if(buflen==65536)
+								buflen=65535;
 							goto realloc;
 						}
 

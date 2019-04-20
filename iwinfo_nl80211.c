@@ -2498,8 +2498,8 @@ static int nl80211_get_scanlist(const char *ifname, char *buf, int *len)
 	          mode == IWINFO_OPMODE_MASTER ||
 	          mode == IWINFO_OPMODE_CLIENT ||
 	          mode == IWINFO_OPMODE_MONITOR) &&
-	         iwinfo_ifup(ifname))
-	         */
+	         iwinfo_ifup(ifname))	     
+	 */
 	else if(1)
 	{
 		printf("sta mode\n");

@@ -424,8 +424,13 @@ static int intel_get_countrylist(const char *ifname, char *buf, int *len)
 
 int intel_get_scanlist(const char *ifname, char *buf, int *len)
 {
-	if(itf_check(ifname))
-        return nl80211_ops.scanlist(ifname, buf, len);
+   int rv;
+   if(itf_check(ifname))
+   {
+        rv=nl80211_ops.scanlist(ifname, buf, len);
+	if(0!=rv)
+		return wext_ops.scanlist(ifname, buf, len);
+   }
     else
         return -1;
 }
